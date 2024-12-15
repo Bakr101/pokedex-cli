@@ -12,11 +12,12 @@ import (
 type cliCommand struct{
 	name		string
 	description	string
-	callback	func(*config) error
+	callback	func(*config, ...string) error
 }
 
 type config struct{
 	pokeapiClient	pokeapi.Client
+	pokedex			Pokedex
 	nextURL			*string
 	prevURL			*string
 }
@@ -45,6 +46,26 @@ func getCommands() map[string]cliCommand{
 			description: "Get the previous page of locations",
 			callback: commandMapb,
 		},
+		"explore":{
+			name: "explore {location-name}",
+			description: "Explore which pokemons are available in an area",
+			callback: commandExplore,
+		},
+		"catch":{
+			name: "catch {pokemon-name}",
+			description: "Tries to catch a pokemon and add it to the Pokedex",
+			callback: commandCatch,
+		},
+		"inspect":{
+			name: "inspect {pokemon-name}",
+			description: "Lists all the details about a pokemon you caught",
+			callback: commandInspect,
+		},
+		"pokedex":{
+			name: "pokedex",
+			description: "Lists all the pokemons in your Pokedex",
+			callback: commandPokedex,
+		},
 	}
 }
 
@@ -59,9 +80,14 @@ func startRepl(c *config){
 		if len(text) == 0{
 			continue
 		}
-		input := text[0]
-		if command, ok := commands[input]; ok{
-			err := command.callback(c)
+		commandName := text[0]
+		args := []string{}
+		if len(text) > 1{
+			args = text[1:] 
+		}
+		
+		if command, ok := commands[commandName]; ok{
+			err := command.callback(c, args...)
 			if err != nil{
 				fmt.Println(err)
 			}
